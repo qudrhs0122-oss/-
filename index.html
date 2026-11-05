@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>요양보호사 급여명세서 만들기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f4f1ec; --panel:#fffdf9; --ink:#1f2a24; --muted:#6b736e; --line:#e2ddd4;
+    --accent:#1f6b4f; --accent-soft:#e3efe9; --warn:#a6501b; --warn-soft:#fbeee4;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  button,input,select{font:inherit;color:inherit}
+  .wrap{max-width:1240px;margin:0 auto;padding:28px 20px 60px}
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  header.top h1{font-size:26px;font-weight:900;margin:0;letter-spacing:-0.5px}
+  header.top p{margin:6px 0 0;color:var(--muted);font-size:14px}
+  .lock{font-size:12.5px;color:var(--accent);background:var(--accent-soft);padding:6px 10px;border-radius:999px;white-space:nowrap}
+
+  .drop{display:block;width:100%;border:2px dashed #c9c2b5;border-radius:18px;background:var(--panel);padding:46px 20px;text-align:center;cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--accent);background:#f7fbf8}
+  .drop .big{font-size:20px;font-weight:700;margin-bottom:6px}
+  .drop .small{color:var(--muted);font-size:14px}
+  .drop .btn{margin-top:18px}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;font-size:14.5px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .btn.ghost:hover{background:#fff}
+  .help{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:14px;color:#3d4641;line-height:1.7}
+  .help b{color:var(--ink)}
+
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+  .stat{padding:4px 12px;border-right:1px solid var(--line)}
+  .stat:last-of-type{border-right:0}
+  .stat .k{font-size:11.5px;color:var(--muted)}
+  .stat .v{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+  .bar .sp{flex:1}
+
+  .settings{display:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;gap:14px 20px;flex-wrap:wrap}
+  .settings.open{display:flex}
+  .field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+  .field input,.field select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px;min-width:120px}
+  .field.wide input{min-width:240px}
+
+  .main{display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start}
+  .list{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;position:sticky;top:12px}
+  .list .search{padding:10px;border-bottom:1px solid var(--line)}
+  .list .search input{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff}
+  .list ul{list-style:none;margin:0;padding:6px;max-height:calc(100vh - 160px);overflow:auto}
+  .list li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:14px}
+  .list li:hover{background:#f3efe8}
+  .list li.on{background:var(--accent);color:#fff}
+  .list li .amt{font-size:12.5px;font-variant-numeric:tabular-nums;opacity:.75}
+  .list li .tag{font-size:10.5px;padding:1px 6px;border-radius:5px;background:#ece7de;color:#5b625d;margin-left:4px}
+  .list li.on .tag{background:rgba(255,255,255,.2);color:#fff}
+  .list li .w{color:var(--warn);font-weight:900;margin-left:4px}
+  .list li.on .w{color:#ffd2b5}
+
+  .preview{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .pv-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .pv-actions .msg{font-size:13px;color:var(--muted)}
+  .warnbox{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px;line-height:1.6}
+  .scaler{overflow:hidden}
+  .scaler>.slip{transform-origin:top left}
+
+  /* ===== 명세서 (A4 794px) ===== */
+  .slip{width:794px;background:#fff;color:#1b1b1b;padding:46px 50px 40px;font-size:13px;line-height:1.45;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .slip h2{text-align:center;font-size:26px;font-weight:900;letter-spacing:6px;margin:0 0 4px}
+  .slip .sub{display:flex;justify-content:space-between;font-size:12.5px;color:#444;margin:14px 0 8px}
+  .slip table{width:100%;border-collapse:collapse}
+  .slip th,.slip td{border:1px solid #9a9a9a;padding:6px 9px;vertical-align:middle}
+  .slip th{background:#eef2ef;font-weight:700;text-align:center;white-space:nowrap}
+  .slip td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .slip td.c{text-align:center}
+  .slip .sec{font-weight:900;font-size:14px;margin:18px 0 6px;display:flex;align-items:center;gap:6px}
+  .slip .sec:before{content:"";width:4px;height:14px;background:#1f6b4f;display:inline-block}
+  .slip .two{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .slip .two table+table{border-left:0}
+  .slip .two table:first-child{border-right:0}
+  .slip tr.tot td,.slip tr.tot th{background:#f6f6f1;font-weight:700}
+  .slip .net{display:flex;justify-content:space-between;align-items:center;border:2px solid #1f6b4f;margin-top:10px;padding:10px 16px;background:#f2f8f5}
+  .slip .net .k{font-weight:900;font-size:15px}
+  .slip .net .v{font-weight:900;font-size:20px;color:#1f6b4f;font-variant-numeric:tabular-nums}
+  .slip .note{font-size:11.5px;color:#555;margin-top:6px;line-height:1.6}
+  .slip .foot{margin-top:26px;display:flex;justify-content:space-between;align-items:flex-end;font-size:12.5px;color:#333}
+  .slip .foot .co{font-size:16px;font-weight:900;color:#1b1b1b}
+  .slip .muted{color:#888}
+
+  #render{position:fixed;left:-20000px;top:0}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1f2a24;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:9}
+  .toast.show{opacity:1}
+  .hidden{display:none!important}
+
+  @media (max-width:860px){
+    .main{grid-template-columns:1fr}
+    .list{position:static}
+    .list ul{max-height:260px}
+    .stat{border-right:0}
+    .lock{white-space:normal}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>요양보호사 급여명세서 만들기</h1>
+      <p>월별 급여 엑셀을 올리면 직원별 임금명세서가 자동으로 만들어져요.</p>
+    </div>
+    <span class="lock">🔒 엑셀은 내 컴퓨터 안에서만 읽어요 · 어디에도 전송·저장되지 않음</span>
+  </header>
+
+  <section id="start">
+    <label class="drop" id="drop">
+      <div class="big">급여 엑셀 파일을 여기에 끌어다 놓으세요</div>
+      <div class="small">또는 눌러서 파일 선택 (.xlsx)</div>
+      <span class="btn">📂 엑셀 파일 선택</span>
+      <input type="file" id="file" accept=".xlsx,.xls,.xlsm" hidden>
+    </label>
+    <div class="help">
+      <b>어떤 파일을 올리나요?</b> 매달 쓰시는 급여 엑셀 그대로요 (예: 「2026년 10월 급여」).<br>
+      · <b>일반요양</b> 시트 — 성명 · 생년월일 · 시급 · 총근무시간 · 총 급여 · 국민연금 · 건강보험 … · 실지급액<br>
+      · <b>가족요양</b> 시트 — 이름 · 어르신 성함 · 급여 · 공제 항목 · 공제후급여<br>
+      두 시트에 적힌 금액을 <b>그대로</b> 가져와서 명세서로 만들어요. 금액 계산은 엑셀에서 하시던 대로 하시면 됩니다.<br>
+      한 분이 어르신 여러 분을 맡아 줄이 나뉘어 있으면(예: 김선희(서완성), 김선희(홍륜진)) <b>한 장으로 합쳐서</b> 보여드려요.
+    </div>
+    <div class="warnbox hidden" id="loadErr" style="margin-top:14px"></div>
+  </section>
+
+  <section id="app" class="hidden">
+    <div class="bar">
+      <div class="stat"><div class="k">대상 월</div><div class="v" id="sMonth">-</div></div>
+      <div class="stat"><div class="k">직원 수</div><div class="v" id="sCount">-</div></div>
+      <div class="stat"><div class="k">총 지급액</div><div class="v" id="sGross">-</div></div>
+      <div class="stat"><div class="k">총 실지급액</div><div class="v" id="sNet">-</div></div>
+      <span class="sp"></span>
+      <button class="btn ghost" id="btnSettings">⚙️ 설정</button>
+      <button class="btn ghost" id="btnReset">↺ 다른 파일</button>
+      <button class="btn dl" id="btnAll">⬇ 전체 PDF</button>
+    </div>
+
+    <div class="settings" id="settings">
+      <label class="field wide">센터 이름<input id="optCo"></label>
+      <label class="field">귀속 연월<input id="optMonth" type="month"></label>
+      <label class="field">지급일<input id="optPay" type="date"></label>
+      <label class="field">명세서 묶음
+        <select id="optGroup">
+          <option value="person">직원별로 합쳐서 1장</option>
+          <option value="row">어르신(수급자)별로 따로</option>
+        </select>
+      </label>
+      <label class="field">기본급 나누기
+        <select id="optSplit">
+          <option value="1">기본급 / 주휴 / 연차로 나눠 표시</option>
+          <option value="0">시급×시간 한 줄로 표시</option>
+        </select>
+      </label>
+      <label class="field">주휴수당 (시간당 원)<input id="optJuhu" type="number" step="1"></label>
+      <label class="field">연차수당 (시간당 원)<input id="optYeon" type="number" step="1"></label>
+    </div>
+
+    <div class="main">
+      <aside class="list">
+        <div class="search"><input id="q" placeholder="이름 검색"></div>
+        <ul id="list"></ul>
+      </aside>
+      <section class="preview">
+        <div class="pv-actions">
+          <button class="btn dl" id="btnPdf">⬇ PDF 저장</button>
+          <button class="btn ghost dl" id="btnPng">🖼 이미지(PNG) 저장 · 카톡 전송용</button>
+          <span class="msg" id="dlMsg"></span>
+        </div>
+        <div id="warn"></div>
+        <div class="scaler" id="scaler"></div>
+      </section>
+    </div>
+  </section>
+</div>
+<div id="render"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- 기본 설정 ---------- */
+const DEFAULTS = { co:"A+21세기 홈케어센터", juhu:2064, yeon:616, group:"person", split:"1" };
+let opts = Object.assign({}, DEFAULTS);
+try { Object.assign(opts, JSON.parse(localStorage.getItem("payslip-opts")||"{}")); } catch(e){}
+function saveOpts(){ try{ localStorage.setItem("payslip-opts", JSON.stringify({co:opts.co,juhu:opts.juhu,yeon:opts.yeon,group:opts.group,split:opts.split})); }catch(e){} }
+
+let STATE = { rows:[], year:null, month:null, payDate:"", slips:[], sel:0, fileName:"" };
+
+/* ---------- 유틸 ---------- */
+const $ = id => document.getElementById(id);
+const norm = s => String(s==null?"":s).replace(/\s+/g,"").replace(/[()（）]/g, m=>m);
+const won = n => (Math.round(n)||0).toLocaleString("ko-KR");
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),2600); }
+
+/* 숫자 칸 읽기: 숫자면 숫자, '이중취득' 같은 글자면 0 + 메모 */
+function numCell(v){
+  if (v==null || v==="") return {n:0, text:null, empty:true};
+  if (typeof v==="number") return {n:v, text:null, empty:false};
+  const s=String(v).trim(); const t=s.replace(/[,원\s]/g,"");
+  if (/^-?\d+(\.\d+)?$/.test(t)) return {n:parseFloat(t), text:null, empty:false};
+  return {n:0, text:s, empty:false};
+}
+function fmtBirth(v){
+  if (v==null||v==="") return "";
+  let s=String(v).replace(/\D/g,"");
+  if (s.length===6){ const yy=+s.slice(0,2); const y=(yy<=30?2000:1900)+yy; return `${y}.${s.slice(2,4)}.${s.slice(4,6)}`; }
+  if (s.length===8) return `${s.slice(0,4)}.${s.slice(4,6)}.${s.slice(6,8)}`;
+  return String(v);
+}
+function splitName(raw){
+  const s=String(raw).trim();
+  const i=s.search(/[(（]/);
+  if (i<0) return {base:s, recip:""};
+  return {base:s.slice(0,i).trim(), recip:s.slice(i+1).replace(/[)）]\s*$/,"").trim()};
+}
+
+/* ---------- 시트 읽기 ---------- */
+const GEN_MAP = {
+  "NO":"no","성명":"name","이름":"name","생년월일":"birth","시급":"wage","총근무시간":"hours",
+  "급여(급여+기타)":"pay","급여":"pay","1,2등급":"grade","휴일추가수당":"holiday","총급여":"gross",
+  "국민연금":"pension","건강보험":"health","고용보험":"employ","장기요양":"ltc","소득세":"itax","지방소득세":"ltax",
+  "기타(보험)":"etcIns","연말정산":"yearEnd","전달":"prevMonth","공제총액":"dedTotal","실지급액":"net",
+  "퇴직적립금":"retire","비고":"memo","대상자":"target"
+};
+const FAM_MAP = {
+  "NO":"no","이름":"name","성명":"name","생년월일":"birth","어르신성함":"recip","총근무시간":"hours",
+  "본인부담금포함":"copayIncl","본인부담금부과전":"preCopay","급여":"gross",
+  "국민연금":"pension","건강보험":"health","고용보험":"employ","장기요양":"ltc","본인부담금공제":"copayDed",
+  "공제총액":"dedTotal","공제후급여":"net","퇴직적립금":"retire"
+};
+
+function findHeader(aoa){
+  for (let r=0;r<Math.min(aoa.length,10);r++){
+    const row=(aoa[r]||[]).map(norm);
+    const hasName=row.includes("성명")||row.includes("이름");
+    if (hasName && row.includes("국민연금") && row.includes("공제총액")) return r;
+  }
+  return -1;
+}
+function titleOf(aoa,hr){
+  for (let r=0;r<hr;r++) for (const c of (aoa[r]||[])) if (typeof c==="string" && /월/.test(c)) return c;
+  return "";
+}
+
+function parseSheet(name, aoa, kind){
+  const hr=findHeader(aoa); if (hr<0) return null;
+  const head=(aoa[hr]||[]).map(norm);
+  const MAP = kind==="fam"?FAM_MAP:GEN_MAP;
+  const col={};
+  head.forEach((h,i)=>{ const k=MAP[h]; if(k && col[k]==null) col[k]=i; });
+  // 일반요양: 총근무시간 바로 오른쪽 제목 없는 칸 = 기타(급여에 더해지는 금액)
+  if (kind==="gen" && col.hours!=null && !head[col.hours+1] && col.pay===col.hours+2) col.extra=col.hours+1;
+  const out=[]; let lastNo=null;
+  for (let r=hr+1;r<aoa.length;r++){
+    const row=aoa[r]||[];
+    const nameRaw=row[col.name];
+    if (nameRaw==null || String(nameRaw).trim()==="") continue;
+    const nm=String(nameRaw).trim();
+    if (/^(총|합계|계|total)$/i.test(nm)) continue;
+    const noV=row[col.no];
+    if (typeof noV==="number") lastNo=noV;
+    const g=k=> col[k]==null? {n:0,text:null,empty:true} : numCell(row[col[k]]);
+    const sp=splitName(nm);
+    const rec={ sheet:name, kind, rowNum:r+1, rawName:nm, base:sp.base, recip:sp.recip, no:lastNo,
+      birthRaw: row[col.birth], birth: fmtBirth(row[col.birth]), hours:g("hours").n, notes:[] };
+    const dedKeys = kind==="fam"
+      ? [["pension","국민연금"],["health","건강보험"],["ltc","장기요양"],["employ","고용보험"],["copayDed","본인부담금 공제"]]
+      : [["pension","국민연금"],["health","건강보험"],["ltc","장기요양"],["employ","고용보험"],["itax","소득세"],["ltax","지방소득세"],["etcIns","기타(보험)"],["yearEnd","연말정산"],["prevMonth","전월 정산"]];
+    rec.ded={};
+    for (const [k,label] of dedKeys){ const c=g(k); rec.ded[k]=c.n; if(c.text) rec.notes.push(`${label}: ${c.text}`); }
+    if (kind==="fam"){
+      if (!rec.recip && col.recip!=null && row[col.recip]!=null) rec.recip=String(row[col.recip]).trim();
+      const ci=g("copayIncl").n, pc=g("preCopay").n;
+      let gross=g("gross"); rec.gross = gross.empty ? ci+pc : gross.n;
+      rec.famPay=rec.gross; rec.wage=null;
+    } else {
+      rec.wage=g("wage").n; rec.extra=g("extra").n;
+      let pay=g("pay"); rec.pay = pay.empty ? Math.ceil((rec.wage*rec.hours+rec.extra)/10)*10 : pay.n;
+      rec.grade=g("grade").n; rec.holiday=g("holiday").n;
+      let gross=g("gross"); rec.gross = gross.empty ? rec.pay+rec.grade+rec.holiday : gross.n;
+    }
+    const dsum=Object.values(rec.ded).reduce((a,b)=>a+b,0);
+    const dt=g("dedTotal"); rec.dedTotal = dt.empty ? dsum : dt.n;
+    const nt=g("net"); rec.net = nt.empty ? rec.gross-rec.dedTotal : nt.n;
+    // 검산
+    if (Math.abs(dsum-rec.dedTotal)>=1) rec.notes.push(`확인 필요: 공제 항목 합계(${won(dsum)}원)와 공제총액(${won(rec.dedTotal)}원)이 달라요`);
+    if (Math.abs(rec.gross-rec.dedTotal-rec.net)>=1) rec.notes.push(`확인 필요: 총급여 − 공제총액 ≠ 실지급액 (${won(rec.gross-rec.dedTotal)} / ${won(rec.net)})`);
+    if (kind==="gen" && Math.abs(rec.pay+rec.grade+rec.holiday-rec.gross)>=1) rec.notes.push(`확인 필요: 급여+1·2등급+휴일수당 합계가 총급여와 달라요`);
+    rec.warn = rec.notes.some(t=>t.startsWith("확인 필요"));
+    out.push(rec);
+  }
+  return {rows:out, title:titleOf(aoa,hr)};
+}
+
+function parseBook(sheets){ // sheets: [{name, aoa}]
+  let rows=[], titles=[];
+  const pick = (re)=> sheets.filter(s=>re.test(s.name) && !/명세서/.test(s.name));
+  let gen=pick(/일반/), fam=pick(/가족/);
+  if (!gen.length && !fam.length){ // 시트 이름이 다르면 머리글로 찾기
+    for (const s of sheets){ if (/명세서/.test(s.name)) continue;
+      const hr=findHeader(s.aoa); if(hr<0) continue;
+      const h=(s.aoa[hr]||[]).map(norm);
+      (h.includes("시급")?gen:fam).push(s);
+    }
+  }
+  for (const s of gen){ const p=parseSheet(s.name,s.aoa,"gen"); if(p){rows=rows.concat(p.rows); titles.push(p.title);} }
+  for (const s of fam){ const p=parseSheet(s.name,s.aoa,"fam"); if(p){rows=rows.concat(p.rows); titles.push(p.title);} }
+  return {rows, titles};
+}
+
+function detectMonth(titles, fileName){
+  const cands=[...titles, fileName||""];
+  for (const t of cands){
+    let m=String(t).match(/(\d{4})\s*년\s*(\d{1,2})\s*월/) || String(t).match(/(\d{2,4})\s*[.\-\/]\s*(\d{1,2})\s*월/);
+    if (m){ let y=+m[1]; if(y<100) y+=2000; return {y, m:+m[2]}; }
+  }
+  for (const t of cands){ const m=String(t).match(/(\d{1,2})\s*월/); if(m) return {y:new Date().getFullYear(), m:+m[1]}; }
+  const d=new Date(); d.setMonth(d.getMonth()-1); return {y:d.getFullYear(), m:d.getMonth()+1};
+}
+
+/* ---------- 명세서 묶기 ---------- */
+function buildSlips(){
+  const groups=new Map();
+  for (const r of STATE.rows){
+    const key = opts.group==="row" ? r.sheet+"#"+r.rowNum : r.base+"|"+String(r.birthRaw||"");
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  }
+  const slips=[];
+  for (const rows of groups.values()){
+    const f=rows[0];
+    const s={ name:f.base, birth:f.birth, rows, label: opts.group==="row" && f.recip ? `${f.base} (${f.recip})` : f.base };
+    const pay={base:0,juhu:0,yeon:0,extra:0,grade:0,holiday:0,fam:0}, ded={};
+    let hours=0, gross=0, dedTotal=0, net=0, wages=new Set(), kinds=new Set(), notes=[];
+    for (const r of rows){
+      kinds.add(r.kind); hours+=r.hours; gross+=r.gross; dedTotal+=r.dedTotal; net+=r.net;
+      for (const k in r.ded) ded[k]=(ded[k]||0)+r.ded[k];
+      if (r.kind==="gen"){
+        wages.add(r.wage);
+        const basePay=r.pay-r.extra;
+        if (opts.split==="1"){
+          const j=Math.round(opts.juhu*r.hours), y=Math.round(opts.yeon*r.hours);
+          pay.juhu+=j; pay.yeon+=y; pay.base+=basePay-j-y;
+        } else pay.base+=basePay;
+        pay.extra+=r.extra; pay.grade+=r.grade; pay.holiday+=r.holiday;
+      } else pay.fam+=r.famPay;
+      const who = r.recip? `(${r.recip}) ` : "";
+      r.notes.forEach(t=>notes.push(rows.length>1? who+t : t));
+    }
+    Object.assign(s,{pay,ded,hours,gross,dedTotal,net,wages:[...wages],kinds:[...kinds],notes,warn:rows.some(r=>r.warn)});
+    slips.push(s);
+  }
+  STATE.slips=slips;
+  if (STATE.sel>=slips.length) STATE.sel=0;
+}
+
+/* ---------- 명세서 HTML ---------- */
+function slipHTML(s){
+  const Y=STATE.year, M=STATE.month;
+  const payDate = STATE.payDate ? STATE.payDate.replace(/-/g,".") : "";
+  const kindLabel = s.kinds.length===2 ? "일반요양 · 가족요양" : (s.kinds[0]==="fam"?"가족요양":"일반요양");
+  const P=s.pay, D=s.ded;
+  const payItems=[];
+  if (s.kinds.includes("gen")){
+    payItems.push(["기본급", P.base]);
+    if (opts.split==="1"){ payItems.push(["주휴수당", P.juhu]); payItems.push(["연차수당", P.yeon]); }
+    if (P.extra) payItems.push(["기타 수당", P.extra]);
+    payItems.push(["1·2등급 수당", P.grade]);
+    payItems.push(["휴일추가수당", P.holiday]);
+  }
+  if (s.kinds.includes("fam")) payItems.push(["가족요양 급여", P.fam]);
+  const dedItems=[["국민연금",D.pension],["건강보험",D.health],["장기요양보험",D.ltc],["고용보험",D.employ]];
+  if (s.kinds.includes("gen")){ dedItems.push(["소득세",D.itax||0],["지방소득세",D.ltax||0]); }
+  if (D.etcIns) dedItems.push(["기타(보험)",D.etcIns]);
+  if (D.yearEnd) dedItems.push(["연말정산",D.yearEnd]);
+  if (D.prevMonth) dedItems.push(["전월 정산",D.prevMonth]);
+  if (D.copayDed) dedItems.push(["본인부담금 공제",D.copayDed]);
+  const n=Math.max(payItems.length, dedItems.length);
+  let payRows="", dedRows="";
+  for (let i=0;i<n;i++){
+    const p=payItems[i], d=dedItems[i];
+    payRows+= p? `<tr><td>${p[0]}</td><td class="n">${won(p[1])}</td></tr>` : `<tr><td>&nbsp;</td><td></td></tr>`;
+    dedRows+= d? `<tr><td>${d[0]}</td><td class="n">${won(d[1])}</td></tr>` : `<tr><td>&nbsp;</td><td></td></tr>`;
+  }
+  const wageTxt = s.wages.length ? s.wages.map(w=>won(w)+"원").join(", ") : "월정액";
+  // 어르신별 내역
+  const detail = s.rows.map(r=>`<tr>
+      <td class="c">${r.kind==="fam"?"가족요양":"일반요양"}</td>
+      <td class="c">${esc(r.recip||"-")}</td>
+      <td class="n">${r.wage? won(r.wage):"-"}</td>
+      <td class="n">${r.hours? (Math.round(r.hours*10)/10).toLocaleString("ko-KR"):"-"}</td>
+      <td class="n">${won(r.gross)}</td><td class="n">${won(r.dedTotal)}</td><td class="n">${won(r.net)}</td></tr>`).join("");
+  // 계산방법
+  const calc=[];
+  if (s.kinds.includes("gen")){
+    if (opts.split==="1"){
+      calc.push(["기본급", `시급 × 근무시간 − 주휴수당 − 연차수당`]);
+      calc.push(["주휴수당", `${won(opts.juhu)}원 × 근무시간 (${(Math.round(s.rows.filter(r=>r.kind==="gen").reduce((a,r)=>a+r.hours,0)*10)/10)}시간)`]);
+      calc.push(["연차수당", `${won(opts.yeon)}원 × 근무시간`]);
+    } else calc.push(["기본급", `시급 × 근무시간 (10원 단위 올림)`]);
+    if (P.grade) calc.push(["1·2등급 수당","1·2등급 수급자 방문 시 지급"]);
+    if (P.holiday) calc.push(["휴일추가수당","휴일 근무 시간에 대한 가산 수당"]);
+  }
+  if (s.kinds.includes("fam")) calc.push(["가족요양 급여","가족요양 월 지급액 (센터 약정 기준)"]);
+  calc.push(["4대보험","국민연금 4.75% · 건강보험 3.595% · 장기요양 = 건강보험료×13.14% · 고용보험 0.9% (10원 미만 절사, 해당자만)"]);
+  const calcRows=calc.map(c=>`<tr><th style="width:130px">${c[0]}</th><td>${c[1]}</td></tr>`).join("");
+  const notes=s.notes.filter(t=>!t.startsWith("확인 필요")&&!/확인 필요/.test(t));
+
+  return `<div class="slip">
+    <h2>임 금 명 세 서</h2>
+    <div class="sub"><span><b>${Y}년 ${M}월분</b></span><span>지급일 : ${payDate||"&nbsp;"}</span></div>
+    <table>
+      <tr><th style="width:90px">성명</th><td style="font-weight:700;font-size:14px">${esc(s.name)}</td><th style="width:90px">생년월일</th><td>${esc(s.birth)}</td></tr>
+      <tr><th>직종</th><td>요양보호사</td><th>근무 구분</th><td>${kindLabel}</td></tr>
+      <tr><th>총 근무시간</th><td>${(Math.round(s.hours*10)/10).toLocaleString("ko-KR")}시간</td><th>시급</th><td>${wageTxt}</td></tr>
+    </table>
+
+    <div class="sec">지급 및 공제 내역</div>
+    <div class="two">
+      <table><tr><th>지급 항목</th><th style="width:120px">금액(원)</th></tr>${payRows}
+        <tr class="tot"><th>지급 총액</th><td class="n">${won(s.gross)}</td></tr></table>
+      <table><tr><th>공제 항목</th><th style="width:120px">금액(원)</th></tr>${dedRows}
+        <tr class="tot"><th>공제 총액</th><td class="n">${won(s.dedTotal)}</td></tr></table>
+    </div>
+    <div class="net"><span class="k">실 지급액</span><span class="v">${won(s.net)}원</span></div>
+    ${notes.length?`<div class="note">※ ${notes.map(esc).join(" · ")}</div>`:""}
+
+    <div class="sec">어르신(수급자)별 내역</div>
+    <table>
+      <tr><th>구분</th><th>수급자</th><th>시급</th><th>근무시간</th><th>지급액</th><th>공제액</th><th>실지급액</th></tr>
+      ${detail}
+    </table>
+
+    <div class="sec">계산 방법</div>
+    <table>${calcRows}</table>
+
+    <div class="foot">
+      <span class="muted">귀하의 노고에 감사드립니다.</span>
+      <span class="co">${esc(opts.co)}</span>
+    </div>
+  </div>`;
+}
+
+/* ---------- 화면 ---------- */
+function renderList(){
+  const q=$("q").value.trim();
+  $("list").innerHTML = STATE.slips.map((s,i)=>{
+    if (q && !s.label.includes(q)) return "";
+    const tag = s.kinds.length===2?"일반+가족":(s.kinds[0]==="fam"?"가족":"");
+    return `<li data-i="${i}" class="${i===STATE.sel?"on":""}"><span>${esc(s.label)}${s.rows.length>1&&opts.group==="person"?`<span class="tag">${s.rows.length}분</span>`:""}${tag?`<span class="tag">${tag}</span>`:""}${s.warn?'<span class="w" title="확인 필요">!</span>':""}</span><span class="amt">${won(s.net)}</span></li>`;
+  }).join("");
+}
+function fitPreview(){
+  const sc=$("scaler"), slip=sc.firstElementChild; if(!slip) return;
+  const w=sc.clientWidth, k=Math.min(1, w/794);
+  slip.style.transform=`scale(${k})`;
+  sc.style.height=(slip.offsetHeight*k)+"px";
+}
+function renderPreview(){
+  const s=STATE.slips[STATE.sel];
+  if(!s){ $("scaler").innerHTML=""; $("warn").innerHTML=""; return; }
+  $("scaler").innerHTML=slipHTML(s);
+  const w=s.notes.filter(t=>/확인 필요/.test(t));
+  $("warn").innerHTML = w.length? `<div class="warnbox"><b>엑셀 숫자를 한 번 확인해 주세요</b> (명세서에는 엑셀 금액 그대로 들어가요)<br>${w.map(esc).join("<br>")}</div>`:"";
+  requestAnimationFrame(fitPreview);
+}
+function renderSummary(){
+  $("sMonth").textContent=`${STATE.year}년 ${STATE.month}월`;
+  $("sCount").textContent=new Set(STATE.rows.map(r=>r.base+"|"+r.birthRaw)).size+"명";
+  $("sGross").textContent=won(STATE.rows.reduce((a,r)=>a+r.gross,0))+"원";
+  $("sNet").textContent=won(STATE.rows.reduce((a,r)=>a+r.net,0))+"원";
+}
+function renderAll(){ buildSlips(); renderSummary(); renderList(); renderPreview(); }
+
+function syncOptsUI(){
+  $("optCo").value=opts.co; $("optJuhu").value=opts.juhu; $("optYeon").value=opts.yeon;
+  $("optGroup").value=opts.group; $("optSplit").value=opts.split;
+  $("optMonth").value=`${STATE.year}-${String(STATE.month).padStart(2,"0")}`;
+  $("optPay").value=STATE.payDate;
+}
+function defaultPayDate(y,m){ let ny=y, nm=m+1; if(nm>12){nm=1;ny++;} return `${ny}-${String(nm).padStart(2,"0")}-15`; }
+
+/* ---------- 파일 읽기 ---------- */
+function loadSheets(sheets, fileName){
+  const {rows,titles}=parseBook(sheets);
+  if (!rows.length){
+    const e=$("loadErr"); e.classList.remove("hidden");
+    e.innerHTML="이 파일에서 급여 표를 찾지 못했어요. <b>일반요양</b> 또는 <b>가족요양</b> 시트에 ‘성명(이름) · 국민연금 · 공제총액’ 머리글이 있는지 확인해 주세요.";
+    return false;
+  }
+  $("loadErr").classList.add("hidden");
+  const ym=detectMonth(titles, fileName);
+  STATE.rows=rows; STATE.year=ym.y; STATE.month=ym.m; STATE.payDate=defaultPayDate(ym.y,ym.m); STATE.sel=0; STATE.fileName=fileName||"";
+  syncOptsUI();
+  $("start").classList.add("hidden"); $("app").classList.remove("hidden");
+  renderAll();
+  return true;
+}
+window.__loadSheets = loadSheets; // (테스트용)
+
+function readFile(file){
+  if(!file) return;
+  if (typeof XLSX==="undefined"){ toast("엑셀 읽기 도구를 불러오는 중이에요. 잠시 후 다시 시도해 주세요."); return; }
+  const fr=new FileReader();
+  fr.onload=()=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(fr.result),{type:"array"});
+      const sheets=wb.SheetNames.map(n=>{
+        const ws=wb.Sheets[n]; const ref=ws["!ref"]; if(!ref) return {name:n,aoa:[]};
+        const rng=XLSX.utils.decode_range(ref); rng.s.r=0; rng.s.c=0; ws["!ref"]=XLSX.utils.encode_range(rng);
+        return {name:n, aoa:XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null,blankrows:true})};
+      });
+      loadSheets(sheets, file.name);
+    }catch(err){ const e=$("loadErr"); e.classList.remove("hidden"); e.textContent="파일을 읽지 못했어요: "+err.message; }
+  };
+  fr.readAsArrayBuffer(file);
+}
+
+/* ---------- 저장 (PDF / PNG) ---------- */
+let downloads=null;
+async function initDownloads(){
+  // claude.ai 안에서 열렸을 때만 claude 저장 기능을 쓰고, 그 외(GitHub Pages 등)는 일반 다운로드
+  if (!(window.parent!==window)) return;
+  for (let i=0;i<20 && !(window.claude && window.claude.use);i++) await new Promise(r=>setTimeout(r,150));
+  try{ if (window.claude && window.claude.use) downloads=await window.claude.use("downloads"); }catch(e){ downloads=null; }
+}
+async function canvasOf(s){
+  const box=$("render"); box.innerHTML=slipHTML(s);
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  const c=await html2canvas(box.firstElementChild,{scale:2,backgroundColor:"#ffffff",useCORS:true,logging:false});
+  box.innerHTML=""; return c;
+}
+function addPage(pdf,c,first){
+  if(!first) pdf.addPage();
+  const W=210,H=297; let w=W, h=c.height*W/c.width;
+  if (h>H){ h=H; w=c.width*H/c.height; }
+  pdf.addImage(c.toDataURL("image/jpeg",0.92),"JPEG",(W-w)/2,0,w,h);
+}
+async function save(filename,data){
+  if (!downloads){
+    const url=URL.createObjectURL(data instanceof Blob?data:new Blob([data]));
+    const a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000); toast("저장했어요"); return;
+  }
+  try{ await downloads.save({filename,data}); toast("저장했어요"); }
+  catch(e){
+    if (e && e.code==="declined") toast("저장을 취소했어요");
+    else toast("저장하지 못했어요"+(e&&e.message?": "+e.message:""));
+  }
+}
+function fname(s,ext){ return `${STATE.year}년${STATE.month}월_임금명세서_${s?s.label.replace(/[\\/:*?"<>|\s]/g,""):"전체"}.${ext}`; }
+async function busy(btn,fn){ const t=btn.textContent; btn.disabled=true; btn.textContent="만드는 중…"; try{ await fn(); } finally{ btn.disabled=false; btn.textContent=t; } }
+
+$("btnPdf").onclick=e=>busy(e.currentTarget, async()=>{
+  const s=STATE.slips[STATE.sel]; const c=await canvasOf(s);
+  const pdf=new jspdf.jsPDF({unit:"mm",format:"a4"}); addPage(pdf,c,true);
+  await save(fname(s,"pdf"), pdf.output("blob"));
+});
+$("btnPng").onclick=e=>busy(e.currentTarget, async()=>{
+  const s=STATE.slips[STATE.sel]; const c=await canvasOf(s);
+  const blob=await new Promise(r=>c.toBlob(r,"image/png"));
+  await save(fname(s,"png"), blob);
+});
+$("btnAll").onclick=e=>busy(e.currentTarget, async()=>{
+  const btn=e.currentTarget;
+  const pdf=new jspdf.jsPDF({unit:"mm",format:"a4"});
+  for (let i=0;i<STATE.slips.length;i++){
+    btn.textContent=`만드는 중… ${i+1}/${STATE.slips.length}`;
+    addPage(pdf, await canvasOf(STATE.slips[i]), i===0);
+  }
+  await save(fname(null,"pdf"), pdf.output("blob"));
+});
+
+/* ---------- 이벤트 ---------- */
+const drop=$("drop"), file=$("file");
+file.onchange=()=>readFile(file.files[0]);
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",e=>readFile(e.dataTransfer.files[0]));
+document.addEventListener("dragover",e=>e.preventDefault());
+document.addEventListener("drop",e=>{ e.preventDefault(); if(!$("app").classList.contains("hidden") && e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); });
+
+$("list").onclick=e=>{ const li=e.target.closest("li"); if(!li) return; STATE.sel=+li.dataset.i; renderList(); renderPreview(); };
+$("q").oninput=renderList;
+$("btnSettings").onclick=()=>$("settings").classList.toggle("open");
+$("btnReset").onclick=()=>{ file.value=""; $("app").classList.add("hidden"); $("start").classList.remove("hidden"); };
+$("optCo").oninput=e=>{opts.co=e.target.value; saveOpts(); renderPreview();};
+$("optJuhu").oninput=e=>{opts.juhu=+e.target.value||0; saveOpts(); renderAll();};
+$("optYeon").oninput=e=>{opts.yeon=+e.target.value||0; saveOpts(); renderAll();};
+$("optGroup").onchange=e=>{opts.group=e.target.value; saveOpts(); STATE.sel=0; renderAll();};
+$("optSplit").onchange=e=>{opts.split=e.target.value; saveOpts(); renderAll();};
+$("optMonth").onchange=e=>{ const [y,m]=e.target.value.split("-").map(Number); if(y&&m){STATE.year=y;STATE.month=m; renderSummary(); renderPreview();} };
+$("optPay").onchange=e=>{ STATE.payDate=e.target.value; renderPreview(); };
+window.addEventListener("resize",fitPreview);
+
+initDownloads();
+})();
+</script>
+</body>
+</html>
