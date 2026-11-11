@@ -500,6 +500,19 @@ input,select,textarea{font:inherit;font-size:16px}
   .cta{font-size:0;gap:0;padding:10px}
   .cta svg{width:18px;height:18px}
 }
+
+.phil-h{text-align:center;margin:0 0 14px}
+.phil-h span{font-size:13px;font-weight:800;letter-spacing:.25em;color:var(--gold)}
+.phil .val small{display:block;color:#8a8f88;font-size:15px;font-weight:600}
+.phil .val h4{font-size:32px;margin:2px 0 10px}
+.mv{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
+.mvc{background:var(--beige);border-radius:18px;padding:30px 34px}
+.mvc span{font-size:13px;font-weight:800;letter-spacing:.2em;color:var(--gold)}
+.mvc p{margin:8px 0 0;font-size:22px;font-weight:800;line-height:1.5;color:#1f2a20}
+.mvc.dark{background:linear-gradient(120deg,#24482a,#3f6f43)}
+.mvc.dark span{color:#c9dbc6}
+.mvc.dark p{color:#fff}
+@media (max-width:860px){.mv{grid-template-columns:1fr}.mvc p{font-size:19px}}
 /* ---------- 모달 ---------- */
 .modal-bg{position:fixed;inset:0;background:rgba(20,30,25,.5);z-index:100;display:grid;place-items:center;padding:20px}
 .modal{background:#fff;border-radius:18px;padding:30px;width:100%;max-width:440px;max-height:92vh;overflow:auto}
@@ -743,10 +756,10 @@ td.l,th.l{text-align:left}
     <section class="intro">
       <div class="wrap w">
         <div>
-          <div class="eyebrow">ABOUT US · SINCE 2018</div>
+          <div class="eyebrow">BRAND STORY · SINCE 2018</div>
           <h2>인생의 두 번째 학교, <em>숲</em></h2>
-          <p>숲은 2018년 서울 동작구에서 첫걸음을 시작해, 주야간보호센터 세 곳과 방문요양센터 한 곳으로 시니어 라이프케어의 영역을 넓혀왔습니다. 단순한 보호를 넘어 신체적 건강과 정서적 안정, 배움과 사회적 교류가 함께하는 새로운 돌봄 문화를 만들어갑니다.</p>
-          <div class="hbtns" style="margin-top:22px"><a class="hbtn line" href="#about"><svg><use href="#i-arrow"/></svg>기관 소개 보기</a></div>
+          <p>배움에는 끝이 없고, 행복한 일상에는 나이의 경계가 없습니다. 숲은 2018년 첫걸음을 시작해 주야간보호센터 세 곳과 방문요양센터 한 곳으로 시니어 라이프케어의 영역을 넓혀왔습니다. 어르신의 하루에 배움과 건강, 행복을 더합니다.</p>
+          <div class="hbtns" style="margin-top:22px"><a class="hbtn line" href="#about-greeting"><svg><use href="#i-arrow"/></svg>기관 소개 보기</a></div>
         </div>
         <div class="nums" id="nums"></div>
       </div>
@@ -844,27 +857,31 @@ td.l,th.l{text-align:left}
     <div class="subhero"><div class="wrap w"><div class="bc">홈 › 기관소개</div><h1>기관소개</h1><p>어르신의 하루가 배움이 되고, 일상이 행복이 되는 곳.</p></div></div>
     <nav class="subtabs"><div class="wrap w" data-tabs="about"></div></nav>
     <section class="psec" id="about-greeting"><div class="wrap w">
-      <h2>숲 소개</h2><p class="lead2">숲이 걸어온 길을 소개합니다</p>
+      <h2>브랜드 스토리</h2><p class="lead2">BRAND STORY</p>
       <div class="greet"><div class="pic"></div><div>
-        <blockquote>“어르신의 하루가 배움이 되고,<br>일상이 행복이 되는 곳.”</blockquote>
-        <p>숲은 2018년, 어르신의 존엄과 건강한 노후를 위한 돌봄의 가치를 바탕으로 서울 동작구에서 첫걸음을 시작하였습니다.</p>
-        <p>단순한 보호와 돌봄을 넘어, 어르신 한 분 한 분의 삶을 존중하고 신체적 건강과 정서적 안정, 배움과 사회적 교류가 함께하는 새로운 시니어 돌봄 문화를 만들어가고 있습니다.</p>
-        <p>2018년 숲데이케어센터를 시작으로 2019년 21세기홈케어센터, 2024년 더숲데이케어센터, 2026년 한강숲데이케어센터에 이르기까지 주야간보호와 방문요양을 아우르며 시니어 라이프케어의 영역을 넓혀왔습니다.</p>
-        <p>그동안 축적한 전문적인 돌봄 경험을 바탕으로 건강관리, 신체재활, 인지교육, 여가활동 등 어르신의 일상 전반을 지원하는 종합 시니어케어 서비스를 지향하고 있습니다.</p>
-        <p><b style="color:var(--g1)">나이가 들어도 배움은 계속되고, 일상에는 새로운 즐거움이 있어야 한다는 믿음.</b></p>
-        <p>숲은 어르신에게는 매일 가고 싶은 학교이자 새로운 활력을 찾는 공간으로, 가족에게는 믿고 맡길 수 있는 든든한 동반자로 자리매김하고자 합니다.</p>
-        <p>앞으로도 숲은 돌봄을 넘어 배움과 건강, 행복한 노후를 함께 설계하는 시니어 라이프케어 전문기업으로 성장해 나가겠습니다.</p>
-        <div class="sign">숲 데이케어 임직원 일동</div>
+        <blockquote>인생의 두 번째 학교, 숲<br><span style="font-size:18px;font-weight:600;color:#4b504a">배움에는 끝이 없고, 행복한 일상에는 나이의 경계가 없습니다.</span></blockquote>
+        <p>숲은 2018년, 어르신의 존엄과 건강한 노후를 위한 새로운 돌봄의 가치를 실현하고자 첫걸음을 시작하였습니다.</p>
+        <p>우리는 어르신의 하루가 단순한 보호와 돌봄에 머무르지 않고, 새로운 배움과 만남, 건강한 활동과 즐거움으로 채워져야 한다고 믿습니다.</p>
+        <p>이러한 철학을 바탕으로 숲데이케어센터를 시작하여 21세기홈케어센터, 더숲데이케어센터, 한강숲데이케어센터에 이르기까지 주야간보호와 방문요양을 아우르는 시니어 라이프케어의 영역을 넓혀왔습니다.</p>
+        <p>그동안 축적한 돌봄 경험과 전문성을 바탕으로 신체재활, 건강관리, 인지교육, 정서지원, 여가활동 등 어르신의 일상 전반을 지원하는 종합적인 서비스를 제공하고 있습니다.</p>
+        <p><b style="color:var(--g1)">숲이 지향하는 공간은 단순한 요양시설이 아닌, 인생의 두 번째 학교입니다.</b></p>
+        <p>어르신에게는 새로운 것을 배우고 사람들과 교류하며 삶의 활력을 되찾는 공간, 가족에게는 소중한 부모님의 하루를 안심하고 맡길 수 있는 공간이 되고자 합니다.</p>
+        <p>한 그루의 나무가 모여 울창한 숲을 이루듯, 어르신 한 분 한 분의 소중한 일상이 모여 더 큰 행복을 만들어간다고 믿습니다.</p>
+        <p>숲은 앞으로도 돌봄의 전문성과 교육의 가치를 결합하여 어르신의 건강한 일상과 존엄한 노후를 함께 설계하는 시니어 라이프케어 전문기업으로 성장해 나가겠습니다.</p>
       </div></div>
     </div></section>
     <section class="psec" id="about-vision"><div class="wrap w">
-      <h2>비전 · 핵심가치</h2><p class="lead2">VISION &amp; VALUES</p>
-      <div class="mission"><b>SLOGAN</b><div><p>인생의 두 번째 학교, 숲</p><span style="opacity:.85">어르신의 배움과 건강, 새로운 일상이 시작되는 곳</span></div></div>
-      <div class="vals">
-        <div class="val"><div class="cir"><svg><use href="#i-care"/></svg></div><h4>존엄</h4><p>어르신 한 분 한 분의 삶과 선택을 존중하는 돌봄</p></div>
-        <div class="val"><div class="cir"><svg><use href="#i-run"/></svg></div><h4>건강</h4><p>건강관리와 신체재활로 지키는 활기찬 일상</p></div>
-        <div class="val"><div class="cir"><svg><use href="#i-brain"/></svg></div><h4>배움</h4><p>인지교육과 여가활동으로 이어가는 평생의 배움</p></div>
-        <div class="val"><div class="cir"><svg><use href="#i-people"/></svg></div><h4>동반</h4><p>가족이 믿고 맡길 수 있는 든든한 동반자</p></div>
+      <h2>철학 · 미션 · 비전</h2><p class="lead2">PHILOSOPHY · MISSION · VISION</p>
+      <div class="phil-h"><span>OUR PHILOSOPHY</span></div>
+      <div class="vals phil">
+        <div class="val"><small>편의보다</small><h4>존엄</h4><p>어르신 한 분 한 분의 삶과 선택을 먼저 존중합니다</p></div>
+        <div class="val"><small>속도보다</small><h4>안전</h4><p>송영부터 귀가까지 서두르지 않고 안전을 지킵니다</p></div>
+        <div class="val"><small>규정보다</small><h4>사람</h4><p>틀에 맞추기보다 어르신의 필요를 먼저 봅니다</p></div>
+        <div class="val"><small>변명보다</small><h4>책임</h4><p>맡겨 주신 하루에 끝까지 책임을 다합니다</p></div>
+      </div>
+      <div class="mv">
+        <div class="mvc"><span>OUR MISSION</span><p>어르신의 하루에 배움과 건강,<br>행복을 더합니다.</p></div>
+        <div class="mvc dark"><span>OUR VISION</span><p>대한민국 시니어의 두 번째 인생을 함께하는<br>평생 배움과 돌봄의 공간</p></div>
       </div>
     </div></section>
     <section class="psec" id="about-history"><div class="wrap w">
@@ -1166,7 +1183,7 @@ const fmtDate = d=>d.replace(/-/g,'.');
 
 /* ---------- 메뉴 구조 ---------- */
 const MENU = [
-  {id:'about',    name:'기관소개',   sub:[['greeting','숲 소개'],['vision','비전 · 핵심가치'],['history','숲이 걸어온 길'],['status','기관 현황'],['map','오시는 길']]},
+  {id:'about',    name:'기관소개',   sub:[['greeting','브랜드 스토리'],['vision','철학 · 미션 · 비전'],['history','숲이 걸어온 길'],['status','기관 현황'],['map','오시는 길']]},
   {id:'daycare',  name:'주야간보호', sub:[['intro','서비스 소개'],['b1','지점 안내'],['program','하루 일과 · 프로그램']]},
   {id:'homecare', name:'방문요양',   sub:[['intro','센터 소개'],['service','서비스 내용'],['process','이용 절차'],['recruit','요양보호사 채용']]},
   {id:'guide',    name:'이용안내',   sub:[['grade','장기요양등급 신청'],['process','이용 절차'],['cost','비용 안내'],['faq','자주 묻는 질문']]},
