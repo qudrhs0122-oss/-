@@ -615,6 +615,30 @@ body:has(#pg-home.on) .foot3{display:none}
   .h-hero{min-height:600px}
   .hs-img{height:42%}
 }
+
+/* v6: 배너 이미지 + 아래 타일 한 줄 */
+#pg-home.on{display:block}
+#pg-home{height:auto;min-height:0}
+.h-hero{aspect-ratio:1854/848;height:auto;min-height:0;background:#f6f3ec}
+.hs .bn{display:block;width:100%;height:100%;object-fit:cover}
+.hctl{bottom:14px}
+.tiles{width:auto;grid-template-columns:repeat(8,1fr);grid-template-rows:auto}
+.tile{min-height:max(170px,calc(100vh - (100vw - 250px) * 0.4574));padding:16px 14px}
+.tile h3{font-size:clamp(17px,1.25vw,22px)}
+.tile small{font-size:12px}
+.tile .go{width:100%;margin-top:clamp(12px,2vh,24px);font-size:12.5px;padding:7px 4px}
+@media (max-width:1100px){
+  .h-hero{height:auto;min-height:0}
+  .tiles{grid-template-columns:repeat(4,1fr)}
+  .tile{min-height:180px}
+}
+@media (max-width:700px){
+  .h-hero{min-height:0}
+  .tiles{grid-template-columns:1fr 1fr}
+  .tile{min-height:150px}
+  .hctl{bottom:4px;gap:8px}
+  .hctl button.ar svg{width:22px}
+}
 /* ---------- 모달 ---------- */
 .modal-bg{position:fixed;inset:0;background:rgba(20,30,25,.5);z-index:100;display:grid;place-items:center;padding:20px}
 .modal{background:#fff;border-radius:18px;padding:30px;width:100%;max-width:440px;max-height:92vh;overflow:auto}
@@ -806,33 +830,8 @@ td.l,th.l{text-align:left}
   <div class="page" id="pg-home">
     <div class="h-hero">
       <div class="slides" id="slides">
-        <div class="slide hs on">
-          <div class="hs-txt">
-            <p class="q">"배움에는 끝이 없고, 행복한 일상에는 나이의 경계가 없습니다"</p>
-            <h1>인생의 두 번째 학교, <em>숲</em></h1>
-            <span class="rule"></span>
-            <p>숲은 2018년, 어르신의 존엄과 건강한 노후를 위해 첫걸음을 시작했습니다. <br>주야간보호와 방문요양을 아우르며 어르신의 하루에 <br>배움과 건강, 행복을 더합니다.</p>
-          </div>
-          <div class="hero-photo hs-img" role="img" aria-label="어르신과 요양보호사가 웃으며 마주보는 모습"></div>
-        </div>
-        <div class="slide hs" data-dark>
-          <div class="hs-txt">
-            <p class="q">"가까운 곳에서 매일 만나는 낮 시간 돌봄"</p>
-            <h1>주야간보호<br><em>숲 · 더숲 · 한강숲</em></h1>
-            <span class="rule"></span>
-            <p>동작구·관악구 세 곳의 데이케어센터에서 송영부터 식사, <br>인지·신체 프로그램까지 하루를 빈틈없이 챙겨 드립니다.</p>
-          </div>
-          <div class="hs-stack" id="stack-art"></div>
-        </div>
-        <div class="slide hs" data-dark>
-          <div class="hs-txt">
-            <p class="q">"익숙한 우리 집에서 받는 1:1 맞춤 돌봄"</p>
-            <h1>방문요양<br><em>21세기홈케어센터</em></h1>
-            <span class="rule"></span>
-            <p>전문 요양보호사가 댁으로 찾아가 신체활동 · 가사 · 정서 지원으로 <br>어르신의 일상을 곁에서 함께합니다.</p>
-          </div>
-          <div class="hs-couple"><img data-img="s4" alt=""></div>
-        </div>
+        <a class="slide hs on" data-dark href="#about-greeting"><img class="bn" src="img/banner1.jpg" alt="SENIOR LIFECARE · 인생의 두 번째 학교, 숲 — 배움과 건강, 교류와 즐거움이 있는 어르신의 새로운 일상, 숲이 함께합니다. 배움 · 건강 · 교류 · 행복"></a>
+        <a class="slide hs" data-dark href="#about-vision"><img class="bn" src="img/banner2.jpg" alt="OUR PHILOSOPHY · 편의보다 존엄, 속도보다 안전, 규정보다 사람, 변명보다 책임."></a>
       </div>
       <div class="hctl" id="hctl">
         <button class="ar" onclick="slideGo(-1)" aria-label="이전 배너"><svg viewBox="0 0 30 12"><path d="M29 6H2M7 1L2 6l5 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
